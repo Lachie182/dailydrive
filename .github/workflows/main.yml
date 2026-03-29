@@ -1,0 +1,36 @@
+name: Refresh Daily Drive
+on:
+  schedule:
+    # Runs at 20:00 UTC (6 AM AEST) and 06:00 UTC (4 PM AEST)
+    - cron: '0 6,20 * * *'
+  workflow_dispatch: # Allows you to run it manually whenever you want
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create Config and Token Files
+        run: |
+          # Pulls the full text of your config from GitHub Secrets
+          echo "${{ secrets.CONFIG_YAML }}" > config.yaml
+          
+          # Pulls your refresh token and puts it into the hidden JSON file
+          echo '{"refresh_token":"${{ secrets.SPOTIFY_REFRESH_TOKEN }}"}' > .spotify-token.json
+
+      - name: Run Script
+        env:
+          # This passes your ID and Secret into the script's environment
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+        run: npm start
