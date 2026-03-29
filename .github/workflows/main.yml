@@ -1,6 +1,7 @@
 name: Refresh Daily Drive
 on:
   schedule:
+    # Runs at 6:00 AM AEST (20:00 UTC) and 4:00 PM AEST (06:00 UTC)
     - cron: '0 6,20 * * *'
   workflow_dispatch: 
 
@@ -19,26 +20,27 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Environment
+      - name: Create Config and Token Files
         shell: bash
         run: |
-          # 1. Create the token file exactly as the script expects
-          echo "{\"refresh_token\":\"${{ secrets.SPOTIFY_REFRESH_TOKEN }}\"}" > .spotify-token.json
-          
-          # 2. Create the config file
-          cat <<EOF > config.yaml
+          # 1. Create the config.yaml exactly as you have it on Windows
+          cat <<'EOF' > config.yaml
           ${{ secrets.CONFIG_YAML }}
           EOF
 
-          # 3. "The Doctor's Fix": Manually inject your IDs into the config file 
-          # just in case the YAML has placeholders.
-          sed -i "s/client_id:.*/client_id: \"${{ secrets.SPOTIFY_CLIENT_ID }}\"/" config.yaml
-          sed -i "s/client_secret:.*/client_secret: \"${{ secrets.SPOTIFY_CLIENT_SECRET }}\"/" config.yaml
-          sed -i "s/id: \"your-playlist-id-here\"/id: \"${{ secrets.SPOTIFY_PLAYLIST_ID }}\"/" config.yaml
+          # 2. Create the .spotify-token.json with all 3 required parts.
+          # We use "1000" as the expires_at to force an immediate refresh.
+          echo '{
+            "access_token": "initial_dummy_token",
+            "refresh_token": "${{ secrets.SPOTIFY_REFRESH_TOKEN }}",
+            "expires_at": 1000
+          }' > .spotify-token.json
+
+          # 3. Create a blank state.json
+          echo "{}" > state.json
 
       - name: Run Script
         env:
-          # We provide these both ways just to be safe
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
         run: npm start
