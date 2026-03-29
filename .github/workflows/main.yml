@@ -1,7 +1,7 @@
 name: Refresh Daily Drive
 on:
   schedule:
-    # Runs at 20:00 UTC (6 AM AEST) and 06:00 UTC (4 PM AEST)
+    # Runs at 6:00 AM AEST (20:00 UTC) and 4:00 PM AEST (06:00 UTC)
     - cron: '0 6,20 * * *'
   workflow_dispatch: 
 
@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6 # Updated to v6
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # Using a newer stable Node version
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
@@ -25,16 +25,14 @@ jobs:
           CONFIG_DATA: ${{ secrets.CONFIG_YAML }}
           REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
         run: |
-          # Safely write the config file
+          # Write the config file
           echo "$CONFIG_DATA" > config.yaml
           
-          # Create the token file your script expects
+          # Create the .spotify-token.json file with your token string
           echo "{\"refresh_token\":\"$REFRESH_TOKEN\"}" > .spotify-token.json
 
       - name: Run Script
         env:
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-          # Some versions of this script prefer the token as an Env Var too
-          SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
         run: npm start
