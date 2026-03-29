@@ -8,14 +8,17 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      # This tells GitHub to use the 2026 Node 24 engine immediately
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6 # Updated to v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6 # Updated to v6
         with:
-          node-version: '20'
+          node-version: '24' # Updated to Node 24
 
       - name: Install dependencies
         run: npm install
@@ -23,20 +26,19 @@ jobs:
       - name: Create Config and Token Files
         shell: bash
         run: |
-          # 1. Create the config.yaml exactly as you have it on Windows
+          # Write the config.yaml
           cat <<'EOF' > config.yaml
           ${{ secrets.CONFIG_YAML }}
           EOF
 
-          # 2. Create the .spotify-token.json with all 3 required parts.
-          # We use "1000" as the expires_at to force an immediate refresh.
+          # Create the .spotify-token.json file with your secret
           echo '{
             "access_token": "initial_dummy_token",
             "refresh_token": "${{ secrets.SPOTIFY_REFRESH_TOKEN }}",
             "expires_at": 1000
           }' > .spotify-token.json
 
-          # 3. Create a blank state.json
+          # Create a blank state.json
           echo "{}" > state.json
 
       - name: Run Script
