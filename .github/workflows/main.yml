@@ -19,33 +19,26 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Create Config and Token Files
+      - name: Build Environment
         shell: bash
         run: |
-          # Write config.yaml exactly as it appears in secrets
+          # 1. Create the token file exactly as the script expects
+          echo "{\"refresh_token\":\"${{ secrets.SPOTIFY_REFRESH_TOKEN }}\"}" > .spotify-token.json
+          
+          # 2. Create the config file
           cat <<EOF > config.yaml
           ${{ secrets.CONFIG_YAML }}
           EOF
 
-          # Check if the secret is just a string or full JSON
-          TOKEN_SECRET='${{ secrets.SPOTIFY_REFRESH_TOKEN }}'
-          if [[ $TOKEN_SECRET == {* ]]; then
-            # If it's already JSON, write it directly
-            echo "$TOKEN_SECRET" > .spotify-token.json
-          else
-            # If it's just the string, wrap it in JSON
-            echo "{\"refresh_token\":\"$TOKEN_SECRET\"}" > .spotify-token.json
-          fi
-
-      - name: Verify Files (Debug)
-        run: |
-          echo "Checking if files exist..."
-          ls -a
-          if [ -f .spotify-token.json ]; then echo "Token file found."; else echo "Token file MISSING."; fi
-          if [ -f config.yaml ]; then echo "Config file found."; else echo "Config file MISSING."; fi
+          # 3. "The Doctor's Fix": Manually inject your IDs into the config file 
+          # just in case the YAML has placeholders.
+          sed -i "s/client_id:.*/client_id: \"${{ secrets.SPOTIFY_CLIENT_ID }}\"/" config.yaml
+          sed -i "s/client_secret:.*/client_secret: \"${{ secrets.SPOTIFY_CLIENT_SECRET }}\"/" config.yaml
+          sed -i "s/id: \"your-playlist-id-here\"/id: \"${{ secrets.SPOTIFY_PLAYLIST_ID }}\"/" config.yaml
 
       - name: Run Script
         env:
+          # We provide these both ways just to be safe
           SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
           SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
         run: npm start
