@@ -1,7 +1,6 @@
 name: Refresh Daily Drive
 on:
   schedule:
-    # Runs at 6:00 AM AEST (20:00 UTC) and 4:00 PM AEST (06:00 UTC)
     - cron: '0 6,20 * * *'
   workflow_dispatch: 
 
@@ -21,15 +20,29 @@ jobs:
         run: npm install
 
       - name: Create Config and Token Files
-        env:
-          CONFIG_DATA: ${{ secrets.CONFIG_YAML }}
-          REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+        shell: bash
         run: |
-          # Write the config file
-          echo "$CONFIG_DATA" > config.yaml
-          
-          # Create the .spotify-token.json file with your token string
-          echo "{\"refresh_token\":\"$REFRESH_TOKEN\"}" > .spotify-token.json
+          # Write config.yaml exactly as it appears in secrets
+          cat <<EOF > config.yaml
+          ${{ secrets.CONFIG_YAML }}
+          EOF
+
+          # Check if the secret is just a string or full JSON
+          TOKEN_SECRET='${{ secrets.SPOTIFY_REFRESH_TOKEN }}'
+          if [[ $TOKEN_SECRET == {* ]]; then
+            # If it's already JSON, write it directly
+            echo "$TOKEN_SECRET" > .spotify-token.json
+          else
+            # If it's just the string, wrap it in JSON
+            echo "{\"refresh_token\":\"$TOKEN_SECRET\"}" > .spotify-token.json
+          fi
+
+      - name: Verify Files (Debug)
+        run: |
+          echo "Checking if files exist..."
+          ls -a
+          if [ -f .spotify-token.json ]; then echo "Token file found."; else echo "Token file MISSING."; fi
+          if [ -f config.yaml ]; then echo "Config file found."; else echo "Config file MISSING."; fi
 
       - name: Run Script
         env:
