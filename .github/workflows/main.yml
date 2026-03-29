@@ -1,8 +1,11 @@
 name: Refresh Daily Drive
 on:
   schedule:
-    # Runs at 6:00 AM AEST (20:00 UTC) and 4:00 PM AEST (06:00 UTC)
-    - cron: '0 6,20 * * *'
+    #  Runs at 20:30 UTC (which is 06:30 AM AEST)
+    - cron: '30 20 * * *'
+
+    #  Runs at 07:00 UTC (which is 05:00 PM AEST)
+    - cron: '0 7 * * *'
   workflow_dispatch: 
 
 jobs:
