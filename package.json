@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "setup": "node setup.js",
+    "token": "node scripts/get-refresh-token.js",
     "start": "node index.js",
     "test": "node index.js --dry-run",
     "taste": "node taste-profile.js",
